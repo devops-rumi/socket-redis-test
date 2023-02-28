@@ -106,7 +106,7 @@
 
       const name = prompt("what's your name");
 
-      const socket = io("ws://localhost:3000", {
+      const socket = io("ws://localhost:3001", {
         query: {
           storeCode: "TEST_TPAY_003",
         },
@@ -125,7 +125,7 @@
       form.addEventListener("submit", (e) => {
         e.preventDefault();
         if (input.value) {
-          socket.emit("chat message", input.value);
+          socket.emit("storeCode", "TEST_TPAY_002");
           input.value = "";
         }
       });

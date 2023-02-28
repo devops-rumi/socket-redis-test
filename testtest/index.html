@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      #body {
+        margin: 0;
+        padding-bottom: 3rem;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+      }
+
+      #form {
+        background: rgba(0, 0, 0, 0.15);
+        padding: 0.25rem;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        height: 3rem;
+        box-sizing: border-box;
+        backdrop-filter: blur(10px);
+      }
+
+      #input {
+        border: none;
+        padding: 0 1rem;
+        flex-grow: 1;
+        border-radius: 2rem;
+        margin: 0.25rem;
+      }
+      #input:focus {
+        outline: none;
+      }
+      #form > button {
+        background: #333;
+        border: none;
+        padding: 0 1rem;
+        margin: 0.25rem;
+        border-radius: 3px;
+        outline: none;
+        color: #fff;
+      }
+
+      #messages {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+      }
+      #messages > li {
+        padding: 0.5rem 1rem;
+      }
+      #messages > li:nth-child(odd) {
+        background: #efefef;
+      }
+      .chat-wrapper {
+        margin: 0 auto;
+        width: 80%;
+      }
+      h1,
+      h2 {
+        align-items: center;
+        text-align: center;
+      }
+      #ul {
+        margin-bottom: 50px;
+      }
+      #form {
+        height: 50px;
+        position: fixed;
+      }
+      .select {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>Chat Room</h1>
+      <h2 id="room-name">room name</h2>
+      <h2 id="user-num">chat user num :</h2>
+      <h2 id="user-list">chat user list :</h2>
+    </div>
+    <div class="select">
+      <select id="selectBox" onchange="changeSelection()">
+        <option selected disabled>참여할 방 번호를 선택하세요</option>
+        <option>Room1</option>
+        <option>Room2</option>
+        <option>Room3</option>
+        <option>Room4</option>
+      </select>
+    </div>
+
+    <div class="chat-wrapper" id="chat-wrapper">
+      <ul id="messages"></ul>
+      <form id="form" action="">
+        <input id="input" autocomplete="off" /><button>Send</button>
+      </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+      let preJoinRoom = "";
+
+      const name = prompt("what's your name");
+
+      const socket = io("ws://localhost:3000");
+
+      const messages = document.getElementById("messages");
+
+      const form = document.getElementById("form");
+      const input = document.getElementById("input");
+      const selectedElement = document.getElementById("selectBox");
+      const roomName = document.getElementById("room-name");
+      const chatUserNum = document.getElementById("user-num");
+      const chatUserList = document.getElementById("user-list");
+
+      // 메시지 입력 후 보내기
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (input.value) {
+          socket.emit("chat message", input.value);
+          input.value = "";
+        }
+      });
+      socket.on("test", (data) => {
+        console.log(test);
+      });
+      // 참여자 입출여부 공지
+      socket.on("notice", (currentChatRoomUserList, userNum, name, msg) => {
+        chatUserNum.textContent = `chat user num : ${userNum}`;
+        chatUserList.textContent = `chat user list : ${currentChatRoomUserList}`;
+        const notice = "Notice : " + name + msg;
+        createNewMessage(notice);
+      });
+
+      // 실시간 채팅 박스 생성
+      socket.on("chat message", (name, msg) => {
+        const message = name + " : " + msg;
+        createNewMessage(message);
+      });
+
+      // 메시지 새로 생성
+      function createNewMessage(msg) {
+        const item = document.createElement("li");
+        item.textContent = msg;
+        messages.appendChild(item);
+      }
+
+      // 채팅방 선택 및 변경
+      function changeSelection() {
+        // 선택한 채팅방 이름
+        let newJoinRoom =
+          selectedElement.options[selectedElement.selectedIndex].text;
+
+        // 상단 채팅방 이름 업데이트
+        roomName.textContent = newJoinRoom;
+
+        // 기존방이 아닌 새로운 방을 선택한 경우
+        if (preJoinRoom !== newJoinRoom) {
+          socket.emit("new join room", preJoinRoom, newJoinRoom, name);
+        }
+
+        preJoinRoom = newJoinRoom;
+      }
+    </script>
+  </body>
+</html>
